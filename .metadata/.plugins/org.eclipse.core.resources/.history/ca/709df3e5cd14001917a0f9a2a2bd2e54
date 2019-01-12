@@ -1,0 +1,118 @@
+package controle;
+
+import modelo.*;
+import rede.*;
+import javax.swing.JTextField;
+
+public class FluxoCarrinho extends Thread {
+	
+	Carrinho C = new Carrinho();
+	JTextField campoCarrinho;
+	JTextField textoMsgRec;
+	JTextField textoMsgEnv;	
+		
+	public JTextField getTextoMsgRec() {
+		return textoMsgRec;
+	}
+
+	public void setTextoMsgRec(JTextField textoMsgRec) {
+		this.textoMsgRec = textoMsgRec;
+	}
+
+	public JTextField getTextoMsgEnv() {
+		return textoMsgEnv;
+	}
+
+	public void setTextoMsgEnv(JTextField textoMsgEnv) {
+		this.textoMsgEnv = textoMsgEnv;
+	}
+
+	public FluxoCarrinho (JTextField campoCarrinho)
+	{
+		this.campoCarrinho = campoCarrinho;
+	}
+	
+	public void acionar ()
+	{
+		Cliente cliElevador = new Cliente();
+		
+		Servidor esteiraA = new Servidor();
+		esteiraA.setTextoDeEntrada(textoMsgRec);
+		esteiraA.setPorta(4444);
+	    esteiraA.start();
+		Servidor esteiraB = new Servidor();
+		esteiraB.setTextoDeEntrada(textoMsgRec);
+		esteiraB.setPorta(4445);
+	    esteiraB.start();
+	    boolean conectou = false;
+		
+	    // DUVIDA - sao 3 clientes, esteiraA, esteiraB e elevador - qual porta usar para cada?
+	    cliElevador.setIPhost("localhost");
+	    cliElevador.setPortaServidor(4445);
+	    
+	    
+	    // DUVIDA - esse while ta c clienteTanque só, eu que tenho 3 clientes, coloco os 3 ali dentro?
+	    while (!conectou)
+    	{
+    		conectou = cliTanque.conectarAoservidor();		
+    	}	    
+		String posAsterisco = "*";
+		campoEsteira.setText(posAsterisco);
+		while (conectou)
+		{
+			//System.out.println("[ESTEIRA] - Estou acionando");
+			C.executaEsteira();
+			if (C.isEncerrarEsteira() == true)
+			{
+				threadServ.setListening(false);
+				conectou = false;
+				cliTanque.encerraConexao();
+			}
+			if (C.isTransmitiuParaElevador())
+			{
+				cliElevador.enviarMensagem(C.getMensagem());
+				textoMsgEnv.setText(C.getMensagem());
+				C.setTransmitiuParaElevador(false);
+				C.setMensagem("nenhuma");
+			}
+			if (C.isTransmitiuParaEsteiraA())
+			{
+				cliEsteiraA.enviarMensagem(C.getMensagem());
+				textoMsgEnv.setText(C.getMensagem());
+				C.setTransmitiuParaEsteiraA(false);
+				C.setMensagem("nenhuma");
+			}
+			if (C.isTransmitiuParaEsteiraB())
+			{
+				cliEsteiraB.enviarMensagem(C.getMensagem());
+				textoMsgEnv.setText(C.getMensagem());
+				C.setTransmitiuParaEsteiraB(false);
+				C.setMensagem("nenhuma");
+			}
+			
+/*			posAsterisco = "*";
+			for (int i = 0; i < E.getPosicao() - 1; i++)
+			{
+				posAsterisco = " " + posAsterisco;
+				campoEsteira.setText(posAsterisco);
+			}*/
+			if (threadServ.isNovaMsg())
+			{
+				C.setMensagem(threadServ.getTextoDeEntrada().getText());
+				threadServ.setNovaMsg(false);
+			}
+			else C.setMensagem("nenhuma");
+			try 
+			{
+				Thread.sleep(500);
+			}
+			catch (InterruptedException e) {}
+		}		
+	}
+	
+	public void run ()
+	{
+		acionar ();
+	}	
+
+}

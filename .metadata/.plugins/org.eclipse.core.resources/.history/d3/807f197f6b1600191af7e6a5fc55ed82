@@ -1,0 +1,77 @@
+package modelo;
+
+import modelo.Elevador.tipoEstado;
+
+public class Elevador {
+
+	static enum tipoEstado {E_Repouso, E_Descendo, E_Subindo, E_Descarregando};
+	
+	boolean elevadorCarregado = false;
+	boolean encerrarEsteira = false;
+	boolean transmitiuParaCarrinho = false;
+	tipoEstado estado = tipoEstado.E_Repouso; //quer dizer que esta no alto esperando
+	int posicao = 1;
+	String mensagem = "nenhuma";
+	
+	
+/*	public void executarElevador() {
+		if (mensagem == "Liberado"){
+			posicao = 2;
+			elevadorCarregado = false; //colocou a peca na esteira C
+			posicao = 1;
+		}
+
+	}*/
+
+	public String getMensagem() {
+		return mensagem;
+	}
+	
+	public void setMensagem(String mensagem) {
+		this.mensagem = mensagem;
+	}
+	
+	public boolean isEncerrarElevador() {
+		return encerrarEsteira;
+	}
+	
+	public boolean isTransmitiuParaCarrinho() {
+		return transmitiuParaCarrinho;
+	}
+	
+	public void setTransmitiuParaCarrinho(boolean transmitiuParaCarrinho) {
+		this.transmitiuParaCarrinho = transmitiuParaCarrinho;
+	}
+	
+	public void transmiteParaCarrinho(String msg)
+	{
+		transmitiuParaCarrinho = true;
+		mensagem = msg;
+	}	
+
+	public void executarElevador() {
+		
+		  switch (estado)
+		  {
+		   	case E_Repouso: 
+		   		if (mensagem.equals("JaEstaNoAlto")){//preciso saber como receber essa mensagem la no FluxoElevador
+		   			transmiteParaCarrinho("Sim");
+			   		estado = tipoEstado.E_Descendo;
+		   		} 
+		   		break;
+		   	case E_Descendo:
+		   		transmiteParaCarrinho("Nao");
+		   		estado = tipoEstado.E_Descarregando;
+		   		break;
+		   	case E_Descarregando:
+		   		transmiteParaCarrinho("Nao");
+		   		estado = tipoEstado.E_Subindo;
+		   		break;
+		   	case E_Subindo:
+		   		transmiteParaCarrinho("Nao");
+		   		estado = tipoEstado.E_Repouso;
+		   		break; 		
+		  }
+	}
+	
+}

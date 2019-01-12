@@ -1,0 +1,131 @@
+package controle;
+
+import modelo.*;
+import rede.*;
+import javax.swing.JTextField;
+
+public class FluxoCarrinho extends Thread {
+	
+	Carrinho C = new Carrinho();
+	JTextField campoCarrinho;
+	JTextField textoMsgRec;
+	JTextField textoMsgEnv;	
+		
+	public JTextField getTextoMsgRec() {
+		return textoMsgRec;
+	}
+
+	public void setTextoMsgRec(JTextField textoMsgRec) {
+		this.textoMsgRec = textoMsgRec;
+	}
+
+	public JTextField getTextoMsgEnv() {
+		return textoMsgEnv;
+	}
+
+	public void setTextoMsgEnv(JTextField textoMsgEnv) {
+		this.textoMsgEnv = textoMsgEnv;
+	}
+
+	public FluxoCarrinho (JTextField campoCarrinho)
+	{
+		this.campoCarrinho = campoCarrinho;
+	}
+	
+	public void acionar ()
+	{
+		Cliente cliElevador = new Cliente();
+		
+		Servidor esteiraA = new Servidor();
+		esteiraA.setTextoDeEntrada(textoMsgRec);
+		esteiraA.setPorta(4444);
+	    esteiraA.start();
+		Servidor esteiraB = new Servidor();
+		esteiraB.setTextoDeEntrada(textoMsgRec);
+		esteiraB.setPorta(4445);
+	    esteiraB.start();
+	    boolean conectou = false;
+		boolean todosConectados = false;
+	  
+	    cliElevador.setIPhost("localhost");
+	    cliElevador.setPortaServidor(4446);
+	    
+	    
+	   
+	    
+	    // DUVIDA - esse while ta c clienteTanque só, eu que tenho 3 clientes, coloco os 3 ali dentro?
+	    while (!conectou)
+    	{
+    		conectou = cliElevador.conectarAoservidor();		
+    	}	
+	    
+	    if (esteiraA.isConectou()
+		    	&& esteiraB.isConectou()
+		    	&& conectou){
+	    	todosConectados = true;
+	    }
+	    
+		while (todosConectados)
+		{
+			//System.out.println("[ESTEIRA] - Estou acionando");
+			C.executarCarrinho();
+			if (C.isEncerrarCarrinho() == true)
+			{
+				esteiraA.setListening(false); // DICA todo lugar que tiver thread servidor, tenho que fazer p esteiraA e p B
+				esteiraA.setConectou(false);
+				esteiraB.setListening(false);
+				esteiraB.setConectou(false);
+				conectou = false;
+				cliElevador.encerraConexao();
+			}
+			if (C.isTransmitiuParaElevador())
+			{
+				cliElevador.enviarMensagem(C.getMensagem());
+				textoMsgEnv.setText(C.getMensagem());
+				C.setTransmitiuParaElevador(false);
+				C.setMensagem("nenhuma");
+			}
+			if (C.isTransmitiuParaEsteiraA())
+			{
+				esteiraA.enviarMensagem(C.getMensagem()); //DICA tem que pegar o codigo novo em que o servidor envia msg e o cliente recebe
+				textoMsgEnv.setText(C.getMensagem());
+				C.setTransmitiuParaEsteiraA(false);
+				C.setMensagem("nenhuma");
+			}
+			if (C.isTransmitiuParaEsteiraB())
+			{
+				esteiraA.enviarMensagem(C.getMensagem());
+				textoMsgEnv.setText(C.getMensagem());
+				C.setTransmitiuParaEsteiraB(false);
+				C.setMensagem("nenhuma");
+			}
+			
+
+			if (esteiraA.isNovaMsg()){
+				C.setMensagem(esteiraA.getTextoDeEntrada().getText());
+				esteiraA.setNovaMsg(false);
+			} else {
+				C.setMensagem("nenhuma");
+			}
+			
+			if (esteiraB.isNovaMsg()){
+				C.setMensagem(esteiraB.getTextoDeEntrada().getText());
+				esteiraB.setNovaMsg(false);
+			} else {
+				C.setMensagem("nenhuma");
+			}
+			
+			try 
+			{
+				Thread.sleep(500);
+			}
+			catch (InterruptedException e) {}
+		}		
+	}
+	
+	public void run ()
+	{
+		acionar ();
+	}	
+
+}

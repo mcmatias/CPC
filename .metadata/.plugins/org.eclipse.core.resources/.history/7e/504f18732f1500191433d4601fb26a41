@@ -1,0 +1,77 @@
+package controle;
+
+import modelo.*;
+import rede.*;
+import javax.swing.JTextField;
+
+public class FluxoEsteira extends Thread {
+	
+	Esteira E = new Esteira();
+	JTextField campoEsteira;
+	JTextField textoMsgRec;
+	JTextField textoMsgEnv;	
+		
+	public JTextField getTextoMsgRec() {
+		return textoMsgRec;
+	}
+
+	public void setTextoMsgRec(JTextField textoMsgRec) {
+		this.textoMsgRec = textoMsgRec;
+	}
+
+	public JTextField getTextoMsgEnv() {
+		return textoMsgEnv;
+	}
+
+	public void setTextoMsgEnv(JTextField textoMsgEnv) {
+		this.textoMsgEnv = textoMsgEnv;
+	}
+
+	public FluxoEsteira (JTextField campoEsteira)
+	{
+		this.campoEsteira = campoEsteira;
+	}
+	
+	public void acionar ()
+	{
+		Cliente clienteCarrinho = new Cliente();		
+	    boolean conectou = false;
+		
+	    clienteCarrinho.setIPhost("localhost");
+	    clienteCarrinho.setPortaServidor(5555);
+	    while (!conectou)
+    	{
+    		conectou = clienteCarrinho.conectarAoservidor();		
+    	}	    
+
+		while (conectou)
+		{
+			//System.out.println("[ESTEIRA] - Estou acionando");
+			E.executaEsteira();
+			if (E.isEncerrarEsteira() == true)
+			{
+				conectou = false;
+				clienteCarrinho.encerraConexao();
+			}
+			if (E.isTransmitiuParaElevador())
+			{
+				clienteCarrinho.enviarMensagem(E.getMensagem());
+				textoMsgEnv.setText(E.getMensagem());
+				E.setTransmitiuParaElevador(false);
+				E.setMensagem("nenhuma");
+			}
+	
+			try 
+			{
+				Thread.sleep(500);
+			}
+			catch (InterruptedException e) {}
+		}		
+	}
+	
+	public void run ()
+	{
+		acionar ();
+	}	
+
+}
